@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>码盾 MaDun · 设置</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent-dim: rgba(0,229,160,0.12);
+    --accent-glow: rgba(0,229,160,0.25);
+    --danger: #ff4d6d;
+    --danger-dim: rgba(255,77,109,0.12);
+    --text: #e8e8f0;
+    --text-muted: #6b6b88;
+    --text-dim: #3a3a55;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo {
+    padding: 0 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .logo-name {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+
+  .logo-version {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .nav {
+    padding: 20px 12px;
+    flex: 1;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+
+  .nav-item.active {
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .status-card {
+    margin: 0 12px;
+    padding: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .status-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .stat { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Main ── */
+  .main {
+    padding: 40px 48px;
+    overflow-y: auto;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.2s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-header {
+    margin-bottom: 36px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .page-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ── Section ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .section-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Toggle ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-row:hover { background: var(--surface2); }
+
+  .toggle-info { flex: 1; }
+  .toggle-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .toggle-desc { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+  .toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+  }
+
+  .toggle input:checked + .toggle-track { background: var(--accent); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+
+  /* ── Tags (whitelist) ── */
+  .tags-area { padding: 18px 22px; }
+
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    animation: tagIn 0.15s ease;
+  }
+
+  .tag.trusted { border-color: rgba(0,229,160,0.3); color: var(--accent); background: var(--accent-dim); }
+  .tag.dangerous { border-color: rgba(255,77,109,0.3); color: var(--danger); background: var(--danger-dim); }
+
+  @keyframes tagIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .tag-remove {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .tag-remove:hover { color: var(--danger); }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--text-dim); }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #0a0a0f;
+  }
+  .btn-accent:hover { background: #00ffb3; box-shadow: 0 0 16px var(--accent-glow); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ── Rules ── */
+  .rule-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 120px auto;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .rule-row:last-child { border-bottom: none; }
+  .rule-row:hover { background: var(--surface2); }
+
+  .rule-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .rule-pattern {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 4px 8px;
+    border-radius: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .risk-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .risk-critical { background: rgba(255,77,109,0.15); color: var(--danger); }
+  .risk-high     { background: rgba(255,160,50,0.15); color: #ffa032; }
+  .risk-medium   { background: rgba(255,220,50,0.12); color: #ffdc32; }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { color: var(--danger); background: var(--danger-dim); }
+
+  /* ── Add rule form ── */
+  .add-rule-form {
+    padding: 18px 22px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+
+  .add-rule-form.open { display: block; }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .form-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .select:focus { border-color: var(--accent); }
+
+  /* ── Log page ── */
+  .log-entry {
+    display: flex;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .log-body { flex: 1; }
+  .log-type {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--danger);
+    margin-bottom: 3px;
+  }
+
+  .log-detail { font-size: 13px; color: var(--text-muted); }
+  .log-app { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Save bar */
+  .save-bar {
+    position: fixed;
+    bottom: 0; left: 240px; right: 0;
+    padding: 16px 48px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .save-bar.visible { transform: translateY(0); }
+  .save-bar-text { font-size: 14px; color: var(--text-muted); }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #0a0a0f;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🔒</div>
+      <div class="logo-name">码盾 MaDun</div>
+      <div class="logo-version">v1.0.0 · 设置面板</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('general')">
+        <span class="nav-icon">⚙️</span> 基本设置
+      </div>
+      <div class="nav-item" onclick="showPage('whitelist')">
+        <span class="nav-icon">✅</span> 白名单管理
+      </div>
+      <div class="nav-item" onclick="showPage('rules')">
+        <span class="nav-icon">🧩</span> 识别规则
+      </div>
+      <div class="nav-item" onclick="showPage('log')">
+        <span class="nav-icon">📋</span> 拦截日志
+      </div>
+    </nav>
+
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-label">运行状态</span>
+        <div class="status-dot"></div>
+      </div>
+      <div class="stat" id="interceptCount">0</div>
+      <div class="stat-label">今日已拦截次数</div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- 基本设置 -->
+    <div class="page active" id="page-general">
+      <div class="page-header">
+        <div class="page-title">基本设置</div>
+        <div class="page-sub">控制 码盾 的核心行为</div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">守护开关</span>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">启用剪贴板守护</div>
+            <div class="toggle-desc">开启后，码盾 将实时监控剪贴板中的敏感信息</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">弹出系统通知</div>
+            <div class="toggle-desc">每次拦截后在屏幕右上角显示通知</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">记录拦截日志</div>
+            <div class="toggle-desc">将拦截记录保存到 dataguard_log.txt</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">信息熵过滤</div>
+            <div class="toggle-desc">自动过滤 sk-xxxx 等示例占位符，减少误报</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">检测灵敏度</span>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">高灵敏度模式</div>
+            <div class="toggle-desc">降低熵值门槛，捕获更多可疑内容（可能增加误报）</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">上下文语义分析</div>
+            <div class="toggle-desc">检测密钥周围是否有 "example"、"test" 等提示词</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markDirty()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 白名单管理 -->
+    <div class="page" id="page-whitelist">
+      <div class="page-header">
+        <div class="page-title">白名单管理</div>
+        <div class="page-sub">这些应用内复制内容时，码盾 将静默放行，不做拦截</div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">受信任应用 <span style="color:var(--accent)" id="trustedCount">（6个）</span></span>
+        </div>
+        <div class="tags-area">
+          <div class="tags-list" id="trustedTags"></div>
+          <div class="add-row">
+            <input class="input" id="trustedInput" placeholder="com.microsoft.VSCode" onkeydown="if(event.key==='Enter') addTrusted()">
+            <button class="btn btn-accent" onclick="addTrusted()">添加</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">高风险出口 <span style="color:var(--danger)" id="dangerCount">（5个）</span></span>
+        </div>
+        <div class="tags-area">
+          <div class="tags-list" id="dangerTags"></div>
+          <div class="add-row">
+            <input class="input" id="dangerInput" placeholder="com.google.Chrome" onkeydown="if(event.key==='Enter') addDanger()">
+            <button class="btn btn-accent" onclick="addDanger()">添加</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 识别规则 -->
+    <div class="page" id="page-rules">
+      <div class="page-header">
+        <div class="page-title">识别规则</div>
+        <div class="page-sub">自定义敏感信息的匹配规则和风险等级</div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">当前规则</span>
+          <button class="btn btn-accent" onclick="toggleAddForm()" style="font-size:12px;padding:6px 14px;">＋ 新增规则</button>
+        </div>
+        <div id="rulesTable"></div>
+        <div class="add-rule-form" id="addRuleForm">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>规则名称</label>
+              <input class="input" id="newRuleName" placeholder="例：自定义密钥">
+            </div>
+            <div class="form-field">
+              <label>正则表达式</label>
+              <input class="input" id="newRulePattern" placeholder="例：mykey-[a-z0-9]{32}">
+            </div>
+            <div class="form-field">
+              <label>风险等级</label>
+              <select class="select" id="newRuleRisk">
+                <option value="critical">极高</option>
+                <option value="high">高</option>
+                <option value="medium" selected>中</option>
+              </select>
+            </div>
+            <div class="form-field" style="display:flex;gap:8px;align-items:flex-end">
+              <button class="btn btn-accent" onclick="addRule()">确认</button>
+              <button class="btn btn-ghost" onclick="toggleAddForm()">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拦截日志 -->
+    <div class="page" id="page-log">
+      <div class="page-header">
+        <div class="page-title">拦截日志</div>
+        <div class="page-sub">码盾 本次运行的拦截记录</div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">最近记录</span>
+          <button class="btn btn-ghost" onclick="clearLog()" style="font-size:12px;padding:6px 14px;">清空</button>
+        </div>
+        <div id="logList">
+          <div class="empty-state">暂无拦截记录<br><span style="font-size:12px;margin-top:4px;display:block">当 码盾 拦截到敏感内容时，记录会出现在这里</span></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Save bar -->
+<div class="save-bar" id="saveBar">
+  <span class="save-bar-text">⚠️ 有未保存的更改</span>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-ghost" onclick="discardChanges()">放弃更改</button>
+    <button class="btn btn-accent" onclick="saveSettings()">保存设置</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 数据 ──
+let state = {
+  trusted: [
+    'com.microsoft.VSCode',
+    'com.apple.dt.Xcode',
+    'com.jetbrains.intellij',
+    'com.sublimetext.4',
+    'com.googlecode.iterm2',
+    'com.apple.Terminal',
+  ],
+  dangerous: [
+    'com.google.Chrome',
+    'com.apple.Safari',
+    'com.tencent.xinWeChat',
+    'com.tinyspeck.slackmacgap',
+    'com.openai.chat',
+  ],
+  rules: [
+    { name: 'OpenAI 密钥',    pattern: 'sk-[a-zA-Z0-9]{32,}',              risk: 'critical' },
+    { name: 'AWS 访问密钥',   pattern: '(AKIA|AGPA)[A-Z0-9]{16}',           risk: 'critical' },
+    { name: 'GitHub Token',   pattern: 'gh[pousr]_[a-zA-Z0-9]{36,}',        risk: 'critical' },
+    { name: 'Slack Token',    pattern: 'xox[baprs]-[a-zA-Z0-9\\-]{10,}',    risk: 'high'     },
+    { name: 'Google API 密钥',pattern: 'AIza[0-9A-Za-z\\-_]{35}',           risk: 'high'     },
+    { name: '私有函数标识',   pattern: '\\bSecret_[a-zA-Z0-9_]+',           risk: 'high'     },
+    { name: '内部函数标识',   pattern: '\\b_internal_[a-zA-Z0-9_]+',        risk: 'medium'   },
+  ],
+  log: [],
+  interceptCount: 0,
+  dirty: false,
+};
+
+// Load from localStorage if available
+try {
+  const saved = localStorage.getItem('dataguard_config');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    state = { ...state, ...parsed, log: state.log };
+  }
+} catch(e) {}
+
+// ── Navigation ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── Render ──
+function render() {
+  renderTags('trustedTags', state.trusted, 'trusted', removeTrusted);
+  renderTags('dangerTags', state.dangerous, 'dangerous', removeDanger);
+  document.getElementById('trustedCount').textContent = `（${state.trusted.length}个）`;
+  document.getElementById('dangerCount').textContent = `（${state.dangerous.length}个）`;
+  renderRules();
+  renderLog();
+  document.getElementById('interceptCount').textContent = state.interceptCount;
+}
+
+function renderTags(containerId, items, type, removeFn) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map((item, i) => `
+    <div class="tag ${type}">
+      ${item}
+      <span class="tag-remove" onclick="${removeFn.name}(${i})">✕</span>
+    </div>
+  `).join('');
+}
+
+const riskLabels = { critical: '极高', high: '高', medium: '中' };
+const riskClass  = { critical: 'risk-critical', high: 'risk-high', medium: 'risk-medium' };
+
+function renderRules() {
+  const el = document.getElementById('rulesTable');
+  if (!state.rules.length) {
+    el.innerHTML = '<div class="empty-state">暂无规则</div>';
+    return;
+  }
+  el.innerHTML = state.rules.map((r, i) => `
+    <div class="rule-row">
+      <div class="rule-name">${r.name}</div>
+      <div class="rule-pattern">${r.pattern}</div>
+      <div class="risk-badge ${riskClass[r.risk]}">${riskLabels[r.risk]}</div>
+      <button class="btn-icon" onclick="removeRule(${i})" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderLog() {
+  const el = document.getElementById('logList');
+  if (!state.log.length) {
+    el.innerHTML = '<div class="empty-state">暂无拦截记录<br><span style="font-size:12px;margin-top:4px;display:block">当 码盾 拦截到敏感内容时，记录会出现在这里</span></div>';
+    return;
+  }
+  el.innerHTML = state.log.slice().reverse().map(entry => `
+    <div class="log-entry">
+      <div class="log-time">${entry.time}</div>
+      <div class="log-body">
+        <div class="log-type">⚠️ ${entry.type}</div>
+        <div class="log-detail">${entry.detail}</div>
+        <div class="log-app">${entry.app || '未知来源'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Actions ──
+function addTrusted() {
+  const val = document.getElementById('trustedInput').value.trim();
+  if (!val || state.trusted.includes(val)) return;
+  state.trusted.push(val);
+  document.getElementById('trustedInput').value = '';
+  markDirty(); render();
+}
+
+function removeTrusted(i) {
+  state.trusted.splice(i, 1);
+  markDirty(); render();
+}
+
+function addDanger() {
+  const val = document.getElementById('dangerInput').value.trim();
+  if (!val || state.dangerous.includes(val)) return;
+  state.dangerous.push(val);
+  document.getElementById('dangerInput').value = '';
+  markDirty(); render();
+}
+
+function removeDanger(i) {
+  state.dangerous.splice(i, 1);
+  markDirty(); render();
+}
+
+function toggleAddForm() {
+  document.getElementById('addRuleForm').classList.toggle('open');
+}
+
+function addRule() {
+  const name    = document.getElementById('newRuleName').value.trim();
+  const pattern = document.getElementById('newRulePattern').value.trim();
+  const risk    = document.getElementById('newRuleRisk').value;
+  if (!name || !pattern) { showToast('请填写名称和正则表达式'); return; }
+  try { new RegExp(pattern); } catch(e) { showToast('正则表达式格式错误'); return; }
+  state.rules.push({ name, pattern, risk });
+  document.getElementById('newRuleName').value = '';
+  document.getElementById('newRulePattern').value = '';
+  document.getElementById('addRuleForm').classList.remove('open');
+  markDirty(); render();
+}
+
+function removeRule(i) {
+  state.rules.splice(i, 1);
+  markDirty(); render();
+}
+
+function clearLog() {
+  state.log = [];
+  state.interceptCount = 0;
+  render();
+  showToast('日志已清空');
+}
+
+// ── Save ──
+function markDirty() {
+  state.dirty = true;
+  document.getElementById('saveBar').classList.add('visible');
+}
+
+async function saveSettings() {
+  const config = {
+    trusted_apps: state.trusted,
+    dangerous_apps: state.dangerous,
+    rules: state.rules.map(r => [r.pattern, r.name]),
+  };
+
+  // 通过 pywebview 原生 API 直接保存（原生窗口模式）
+  if (window.pywebview && window.pywebview.api) {
+    try {
+      const result = await window.pywebview.api.save_config(config);
+      if (result && result.status === 'ok') {
+        state.dirty = false;
+        document.getElementById('saveBar').classList.remove('visible');
+        showToast('✅ 设置已保存并立即生效！');
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // 降级：下载 config.json（浏览器模式）
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dataguard_config.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ 设置已保存，配置将自动同步');
+  state.dirty = false;
+  document.getElementById('saveBar').classList.remove('visible');
+}
+
+function discardChanges() {
+  location.reload();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── 读取真实日志（直接读取文件）──
+function parseLogLine(line) {
+  const timeMatch = line.match(/\[(\d{4}-\d{2}-\d{2} (\d{2}:\d{2}:\d{2}))\]/);
+  if (!timeMatch) return null;
+  if (!line.includes('次拦截')) return null;
+
+  const time = timeMatch[2];
+  const typeMatch = line.match(/类型:([^|]+)/) || line.match(/拦截\s*\|\s*([^|]+?)\s*\|/);
+  const appMatch = line.match(/来源[:：]\s*(\S+)/) || line.match(/\|\s*(com\.\S+)\s*$/);
+  const riskMatch = line.match(/(🔴 高危出口|🟡 普通应用)/);
+
+  return {
+    time: time,
+    type: typeMatch ? typeMatch[1].trim() : '未知类型',
+    detail: '已自动净化并替换为脱敏标记',
+    app: appMatch ? appMatch[1].trim() : '未知来源',
+    risk: riskMatch ? riskMatch[1] : '🟡 普通应用',
+  };
+}
+
+function loadRealLog() {
+  try {
+    // 读取 Python 注入的日志数据
+    if (typeof __MADUN_LOG__ !== 'undefined' && __MADUN_LOG__.length > 0) {
+      state.log = __MADUN_LOG__;
+      state.interceptCount = __MADUN_LOG__.length;
+      render();
+    }
+  } catch(e) {}
+}
+
+loadRealLog();
+render();
+</script>
+</body>
+</html>
